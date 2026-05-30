@@ -513,9 +513,25 @@
       status.textContent = 'Detecting location...';
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          status.textContent = 'Location detected!';
-          input.value = 'South Africa (current location)';
-          list.classList.remove('open');
+          const { latitude, longitude } = pos.coords;
+          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`, {
+            headers: { 'Accept-Language': 'en' }
+          })
+            .then(r => r.json())
+            .then(data => {
+              const addr = data.address || {};
+              const city = addr.city || addr.town || addr.village || addr.county || '';
+              const state = addr.state || addr.region || '';
+              const country = addr.country || '';
+              const parts = [city, state, country].filter(Boolean);
+              input.value = parts.join(', ');
+              status.textContent = 'Location detected!';
+              list.classList.remove('open');
+            })
+            .catch(() => {
+              input.value = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+              status.textContent = 'Location detected!';
+            });
         },
         () => {
           status.textContent = 'Could not detect location. Enter manually.';
