@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starlink - Where will you use it?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      color: #fff;
+      min-height: 100dvh;
+      background-color: #0d0d0e;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .topo-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .topo-bg svg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      padding: 52px 24px 40px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 32px;
+    }
+
+    /* Current Location Button */
+    .location-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 0.2s, border-color 0.2s;
+      text-align: left;
+    }
+
+    .location-btn:hover {
+      background: rgba(255,255,255,0.09);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    .location-btn .loc-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .location-btn .loc-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .location-btn .loc-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .location-btn .loc-text span:first-child {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .location-btn .loc-text span:last-child {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.45);
+      font-weight: 300;
+      margin-top: 1px;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .divider span {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Address input */
+    .input-wrapper {
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      padding: 12px 16px 14px;
+      background: rgba(255,255,255,0.04);
+      position: relative;
+    }
+
+    .input-wrapper.focused {
+      border-color: rgba(255,255,255,0.6);
+    }
+
+    .input-wrapper label {
+      display: block;
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper input {
+      display: block;
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 1.05rem;
+      color: #fff;
+      font-family: 'Roboto', sans-serif;
+      font-weight: 400;
+      caret-color: #fff;
+    }
+
+    .input-wrapper input::placeholder {
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Autocomplete dropdown */
+    .autocomplete-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #1c1c1e;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+
+    .autocomplete-list.open { display: block; }
+
+    .autocomplete-list::-webkit-scrollbar { width: 4px; }
+    .autocomplete-list::-webkit-scrollbar-track { background: transparent; }
+    .autocomplete-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+    .ac-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      transition: background 0.15s;
+    }
+
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item:hover, .ac-item.active { background: rgba(255,255,255,0.08); }
+
+    .ac-item svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      opacity: 0.45;
+    }
+
+    .ac-item .ac-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ac-item .ac-city {
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: #fff;
+    }
+
+    .ac-item .ac-province {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.45);
+      margin-top: 1px;
+    }
+
+    /* Continue button */
+    .continue-btn {
+      display: block;
+      width: 100%;
+      padding: 18px;
+      background: #fff;
+      color: #000;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 6px;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      margin-top: 24px;
+      transition: opacity 0.2s;
+    }
+
+    .continue-btn:hover { opacity: 0.88; }
+
+    @media (min-width: 500px) {
+      h1 { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topo-bg">
+    <svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>.topo { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 1; }</style>
+      </defs>
+      <ellipse class="topo" cx="200" cy="400" rx="30" ry="20"/>
+      <ellipse class="topo" cx="200" cy="400" rx="60" ry="42"/>
+      <ellipse class="topo" cx="200" cy="400" rx="90" ry="66"/>
+      <ellipse class="topo" cx="200" cy="400" rx="120" ry="92"/>
+      <ellipse class="topo" cx="200" cy="400" rx="155" ry="122"/>
+      <ellipse class="topo" cx="200" cy="400" rx="192" ry="156"/>
+      <ellipse class="topo" cx="200" cy="400" rx="232" ry="194"/>
+      <ellipse class="topo" cx="200" cy="400" rx="274" ry="236"/>
+      <ellipse class="topo" cx="200" cy="400" rx="318" ry="282"/>
+      <ellipse class="topo" cx="200" cy="400" rx="365" ry="332"/>
+      <ellipse class="topo" cx="200" cy="400" rx="414" ry="386"/>
+      <ellipse class="topo" cx="200" cy="400" rx="465" ry="444"/>
+      <ellipse class="topo" cx="50" cy="180" rx="24" ry="16"/>
+      <ellipse class="topo" cx="50" cy="180" rx="50" ry="36"/>
+      <ellipse class="topo" cx="50" cy="180" rx="80" ry="60"/>
+      <ellipse class="topo" cx="50" cy="180" rx="115" ry="88"/>
+      <ellipse class="topo" cx="50" cy="180" rx="154" ry="120"/>
+      <ellipse class="topo" cx="50" cy="180" rx="196" ry="156"/>
+      <ellipse class="topo" cx="340" cy="620" rx="20" ry="14"/>
+      <ellipse class="topo" cx="340" cy="620" rx="48" ry="34"/>
+      <ellipse class="topo" cx="340" cy="620" rx="80" ry="58"/>
+      <ellipse class="topo" cx="340" cy="620" rx="116" ry="86"/>
+      <ellipse class="topo" cx="340" cy="620" rx="156" ry="118"/>
+      <ellipse class="topo" cx="340" cy="620" rx="200" ry="154"/>
+    </svg>
+  </div>
+
+  <div class="content">
+    <h1>Where will you use Starlink?</h1>
+
+    <!-- Current Location -->
+    <button class="location-btn" id="useLocationBtn">
+      <div class="loc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="loc-text">
+        <span>Use Current Location</span>
+        <span id="locationStatus">Detect my location automatically</span>
+      </div>
+    </button>
+
+    <div class="divider"><span>or</span></div>
+
+    <!-- Address Input with Autocomplete -->
+    <div class="input-wrapper" id="inputWrapper">
+      <label>Address</label>
+      <input
+        type="text"
+        id="address"
+        placeholder="City or province in South Africa..."
+        autocomplete="off"
+      >
+      <div class="autocomplete-list" id="autocompleteList"></div>
+    </div>
+
+    <a href="index.html" class="continue-btn" id="continueBtn">Continue</a>
+  </div>
+
+  <script>
+    const SA_LOCATIONS = [
+      // Gauteng
+      { city: "Johannesburg", province: "Gauteng" },
+      { city: "Pretoria", province: "Gauteng" },
+      { city: "Soweto", province: "Gauteng" },
+      { city: "Sandton", province: "Gauteng" },
+      { city: "Ekurhuleni", province: "Gauteng" },
+      { city: "Benoni", province: "Gauteng" },
+      { city: "Boksburg", province: "Gauteng" },
+      { city: "Germiston", province: "Gauteng" },
+      { city: "Centurion", province: "Gauteng" },
+      { city: "Midrand", province: "Gauteng" },
+      { city: "Randburg", province: "Gauteng" },
+      { city: "Roodepoort", province: "Gauteng" },
+      { city: "Tembisa", province: "Gauteng" },
+      { city: "Vereeniging", province: "Gauteng" },
+      { city: "Vanderbijlpark", province: "Gauteng" },
+
+      // Western Cape
+      { city: "Cape Town", province: "Western Cape" },
+      { city: "Stellenbosch", province: "Western Cape" },
+      { city: "George", province: "Western Cape" },
+      { city: "Paarl", province: "Western Cape" },
+      { city: "Worcester", province: "Western Cape" },
+      { city: "Knysna", province: "Western Cape" },
+      { city: "Mossel Bay", province: "Western Cape" },
+      { city: "Somerset West", province: "Western Cape" },
+      { city: "Bellville", province: "Western Cape" },
+      { city: "Mitchells Plain", province: "Western Cape" },
+
+      // KwaZulu-Natal
+      { city: "Durban", province: "KwaZulu-Natal" },
+      { city: "Pietermaritzburg", province: "KwaZulu-Natal" },
+      { city: "Richards Bay", province: "KwaZulu-Natal" },
+      { city: "Newcastle", province: "KwaZulu-Natal" },
+      { city: "Ladysmith", province: "KwaZulu-Natal" },
+      { city: "Pinetown", province: "KwaZulu-Natal" },
+      { city: "Tongaat", province: "KwaZulu-Natal" },
+      { city: "Empangeni", province: "KwaZulu-Natal" },
+      { city: "Ballito", province: "KwaZulu-Natal" },
+      { city: "Umhlanga", province: "KwaZulu-Natal" },
+
+      // Eastern Cape
+      { city: "Gqeberha (Port Elizabeth)", province: "Eastern Cape" },
+      { city: "East London", province: "Eastern Cape" },
+      { city: "Mthatha", province: "Eastern Cape" },
+      { city: "Uitenhage", province: "Eastern Cape" },
+      { city: "Bhisho", province: "Eastern Cape" },
+      { city: "Grahamstown (Makhanda)", province: "Eastern Cape" },
+      { city: "King William's Town", province: "Eastern Cape" },
+      { city: "Queenstown", province: "Eastern Cape" },
+
+      // Limpopo
+      { city: "Polokwane", province: "Limpopo" },
+      { city: "Tzaneen", province: "Limpopo" },
+      { city: "Louis Trichardt", province: "Limpopo" },
+      { city: "Thohoyandou", province: "Limpopo" },
+      { city: "Mokopane", province: "Limpopo" },
+      { city: "Bela-Bela", province: "Limpopo" },
+      { city: "Phalaborwa", province: "Limpopo" },
+
+      // Mpumalanga
+      { city: "Mbombela (Nelspruit)", province: "Mpumalanga" },
+      { city: "eMalahleni (Witbank)", province: "Mpumalanga" },
+      { city: "Middelburg", province: "Mpumalanga" },
+      { city: "Secunda", province: "Mpumalanga" },
+      { city: "Standerton", province: "Mpumalanga" },
+      { city: "Barberton", province: "Mpumalanga" },
+      { city: "White River", province: "Mpumalanga" },
+
+      // Free State
+      { city: "Bloemfontein", province: "Free State" },
+      { city: "Welkom", province: "Free State" },
+      { city: "Sasolburg", province: "Free State" },
+      { city: "Kroonstad", province: "Free State" },
+      { city: "Phuthaditjhaba", province: "Free State" },
+      { city: "Bethlehem", province: "Free State" },
+      { city: "Virginia", province: "Free State" },
+
+      // North West
+      { city: "Mahikeng (Mafikeng)", province: "North West" },
+      { city: "Rustenburg", province: "North West" },
+      { city: "Klerksdorp", province: "North West" },
+      { city: "Potchefstroom", province: "North West" },
+      { city: "Brits", province: "North West" },
+      { city: "Hartbeespoort", province: "North West" },
+      { city: "Lichtenburg", province: "North West" },
+
+      // Northern Cape
+      { city: "Kimberley", province: "Northern Cape" },
+      { city: "Upington", province: "Northern Cape" },
+      { city: "Springbok", province: "Northern Cape" },
+      { city: "De Aar", province: "Northern Cape" },
+      { city: "Kuruman", province: "Northern Cape" },
+    ];
+
+    const input = document.getElementById('address');
+    const list = document.getElementById('autocompleteList');
+    const wrapper = document.getElementById('inputWrapper');
+    let activeIndex = -1;
+
+    function renderList(items) {
+      list.innerHTML = '';
+      activeIndex = -1;
+
+      if (!items.length) {
+        list.classList.remove('open');
+        return;
+      }
+
+      items.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'ac-item';
+        div.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          <div class="ac-text">
+            <span class="ac-city">${item.city}</span>
+            <span class="ac-province">${item.province}, South Africa</span>
+          </div>`;
+        div.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          selectItem(item);
+        });
+        list.appendChild(div);
+      });
+
+      list.classList.add('open');
+    }
+
+    function selectItem(item) {
+      input.value = `${item.city}, ${item.province}, South Africa`;
+      list.classList.remove('open');
+    }
+
+    input.addEventListener('focus', () => {
+      wrapper.classList.add('focused');
+      const val = input.value.trim();
+      if (val.length >= 1) filterAndRender(val);
+      else renderList(SA_LOCATIONS.slice(0, 8));
+    });
+
+    input.addEventListener('blur', () => {
+      wrapper.classList.remove('focused');
+      setTimeout(() => list.classList.remove('open'), 150);
+    });
+
+    input.addEventListener('input', () => {
+      const val = input.value.trim();
+      if (!val) { renderList(SA_LOCATIONS.slice(0, 8)); return; }
+      filterAndRender(val);
+    });
+
+    function filterAndRender(val) {
+      const q = val.toLowerCase();
+      const filtered = SA_LOCATIONS.filter(l =>
+        l.city.toLowerCase().includes(q) || l.province.toLowerCase().includes(q)
+      );
+      renderList(filtered.slice(0, 10));
+    }
+
+    input.addEventListener('keydown', (e) => {
+      const items = list.querySelectorAll('.ac-item');
+      if (!items.length) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIndex = Math.min(activeIndex + 1, items.length - 1);
+        items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+        items[activeIndex].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIndex = Math.max(activeIndex - 1, 0);
+        items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+        items[activeIndex].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter' && activeIndex >= 0) {
+        e.preventDefault();
+        items[activeIndex].dispatchEvent(new MouseEvent('mousedown'));
+      } else if (e.key === 'Escape') {
+        list.classList.remove('open');
+      }
+    });
+
+    // Use Current Location
+    document.getElementById('useLocationBtn').addEventListener('click', () => {
+      const status = document.getElementById('locationStatus');
+      if (!navigator.geolocation) {
+        status.textContent = 'Geolocation not supported by your browser.';
+        return;
+      }
+      status.textContent = 'Detecting location...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          status.textContent = 'Location detected!';
+          input.value = 'South Africa (current location)';
+          list.classList.remove('open');
+        },
+        () => {
+          status.textContent = 'Could not detect location. Enter manually.';
+        }
+      );
+    });
+  </script>
+
+</body>
+</html>
